@@ -124,7 +124,7 @@
                 <div class="w-16 h-16 bg-neutral-950 rounded-2xl border border-orange-500/30 flex items-center justify-center mx-auto mb-4 shadow-inner">
                     <i class="fa-solid fa-user-lock text-2xl text-orange-500"></i>
                 </div>
-                <h2 class="text-2xl font-bold font-luxury text-white mb-2">Acesse Seus Pedidos</h2>
+                <h2 class="text-2xl font-bold font-luxury text-white mb-2">Acesse por aqui seus pedidos.</h2>
                 <p class="text-xs text-neutral-400 mb-6">Digite seu e-mail ou WhatsApp cadastrado para ver status, pagamentos e chat.</p>
                 <input type="text" id="loginIdentifier" placeholder="Seu e-mail ou WhatsApp" class="w-full bg-neutral-950 border border-neutral-800 text-white rounded-2xl p-3.5 text-xs mb-4 focus:ring-2 focus:ring-orange-500 outline-none">
                 <button onclick="loginClient()" class="w-full bg-orange-600 hover:bg-orange-500 text-black font-bold py-3.5 rounded-2xl text-xs uppercase tracking-wider transition shadow-lg shadow-orange-600/20">Entrar na Área do Cliente</button>
@@ -219,10 +219,10 @@
                 <span class="text-[10px] text-neutral-400 uppercase font-bold tracking-wider block">Cobrança Expressa Celular</span>
                 <div class="grid grid-cols-2 gap-2">
                     <button type="button" onclick="openExpressPayModal('Apple Pay')" class="bg-black hover:bg-neutral-900 text-white border border-neutral-700 font-bold py-3 rounded-2xl text-xs flex items-center justify-center gap-2 transition shadow-md">
-                        <i class="fa-brands fa-apple text-base"></i> Apple Pay
+                        <i class="fa-brands fa-apple text-base"></i> Apple Pay (Manutenção)
                     </button>
                     <button type="button" onclick="openExpressPayModal('Google Pay')" class="bg-white hover:bg-neutral-200 text-black font-bold py-3 rounded-2xl text-xs flex items-center justify-center gap-2 transition shadow-md">
-                        <i class="fa-brands fa-google text-base"></i> Google Pay
+                        <i class="fa-brands fa-google text-base"></i> Google Pay (Manutenção)
                     </button>
                 </div>
                 <div class="relative flex py-2 items-center">
@@ -247,8 +247,8 @@
                     <label class="text-neutral-400 font-bold uppercase block mb-1 text-[10px] tracking-wider">Forma de Pagamento</label>
                     <select id="paymentMethod" onchange="togglePaymentFields()" class="w-full bg-neutral-950 border border-neutral-800 text-white rounded-2xl p-3.5 outline-none focus:ring-2 focus:ring-orange-500">
                         <option value="PIX">PIX (Cobrança Instantânea QR Code)</option>
-                        <option value="Cartão de Crédito">Cartão de Crédito (Cobrança Online)</option>
-                        <option value="Cartão de Débito">Cartão de Débito (Cobrança Online)</option>
+                        <option value="Cartão de Crédito">Cartão de Crédito (Cobrança Online) (Manutenção)</option>
+                        <option value="Cartão de Débito">Cartão de Débito (Cobrança Online) (Manutenção)</option>
                     </select>
                 </div>
 
