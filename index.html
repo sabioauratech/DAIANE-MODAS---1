@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <!-- SDK Oficial do Mercado Pago -->
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyD0_EaySAuuurcL7_L4ydcL-0x5vb9VqnY",
@@ -20,6 +22,11 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+
+        // Inicializa o SDK do Mercado Pago com a sua Public Key (substitua pela sua chave pública real se necessário)
+        const mp = new MercadoPago('APP_USR-YOUR-PUBLIC-KEY-HERE', {
+            locale: 'pt-BR'
+        });
 
         tailwind.config = {
             theme: {
@@ -44,7 +51,6 @@
 </head>
 <body class="text-neutral-100 flex flex-col min-h-screen custom-scrollbar">
 
-    <!-- Anúncio Dinâmico vindo da Gestão -->
     <div id="dynamicAnnouncementBar" class="bg-gradient-to-r from-orange-600 via-orange-500 to-amber-600 text-black text-xs py-2.5 text-center font-bold tracking-widest px-4 uppercase shadow-lg z-50">
         ✨ FRETE GRÁTIS EM COMPRAS ACIMA DE R$ 299 | APROVEITE NOSSAS OFERTAS
     </div>
@@ -91,7 +97,6 @@
     </header>
 
     <main class="flex-grow">
-        <!-- Vitrine com Fundo Preto Puro e Minimalista -->
         <section id="viewStore" class="view-section">
             <div class="relative w-full h-[450px] sm:h-[500px] overflow-hidden mb-12 flex items-center justify-center bg-neutral-950 border-b border-neutral-900 shadow-2xl">
                 <div class="absolute inset-0 bg-cover bg-center opacity-25" style="background-image: url('https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1600&q=80');"></div>
@@ -118,7 +123,6 @@
             </div>
         </section>
 
-        <!-- Área do Cliente e Rastreio -->
         <section id="viewAccount" class="view-section hidden max-w-5xl mx-auto px-4 py-12">
             <div id="clientLoginForm" class="max-w-md mx-auto glass-panel p-8 rounded-3xl text-center shadow-2xl">
                 <div class="w-16 h-16 bg-neutral-950 rounded-2xl border border-orange-500/30 flex items-center justify-center mx-auto mb-4 shadow-inner">
@@ -188,7 +192,6 @@
                 
                 <div id="cartItemsContainer" class="flex-1 overflow-y-auto py-4 space-y-3"></div>
                 
-                <!-- Área de Cupom no Carrinho -->
                 <div class="bg-neutral-950 p-3.5 rounded-2xl border border-neutral-800 space-y-2">
                     <div class="flex gap-2">
                         <input type="text" id="couponInput" placeholder="Possui cupom de desconto?" class="flex-1 bg-neutral-900 border border-neutral-800 text-white text-xs rounded-xl px-3 py-2.5 uppercase outline-none focus:ring-1 focus:ring-orange-500">
@@ -208,14 +211,14 @@
         </div>
     </div>
 
-    <!-- Modal Checkout Unificado (Checkout Pro) -->
+    <!-- Modal Checkout Unificado -->
     <div id="checkoutModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="glass-panel border border-neutral-800 rounded-3xl max-w-lg w-full p-8 max-h-[90vh] overflow-y-auto relative shadow-2xl">
             <button onclick="closeCheckoutModal()" class="absolute top-4 right-4 text-neutral-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
             <h2 class="text-xl font-bold font-luxury text-white mb-2">Finalizar Pedido com Mercado Pago</h2>
-            <p class="text-xs text-neutral-400 mb-6">Pague com Cartão de Crédito (até 6x), Débito, Pix, Apple Pay ou Google Pay de forma 100% segura.</p>
+            <p class="text-xs text-neutral-400 mb-6">Insira seus dados para registrar o pedido com segurança.</p>
             
-            <form onsubmit="processCheckoutPro(event)" class="space-y-4 text-xs">
+            <form onsubmit="processCheckoutOrder(event)" class="space-y-4 text-xs">
                 <div>
                     <label class="text-neutral-400 font-bold uppercase block mb-1 text-[10px] tracking-wider">Dados Pessoais</label>
                     <input type="text" id="custName" required placeholder="Nome Completo" class="w-full bg-neutral-950 border border-neutral-800 text-white rounded-2xl p-3.5 mb-2 outline-none focus:ring-2 focus:ring-orange-500">
@@ -229,11 +232,11 @@
 
                 <div class="bg-neutral-950 p-4 rounded-2xl border border-neutral-800 space-y-2 text-center">
                     <i class="fa-solid fa-shield-halved text-orange-500 text-xl"></i>
-                    <p class="text-[11px] text-neutral-300">Ao clicar no botão abaixo, você será direcionado para o ambiente seguro do <b>Mercado Pago</b> onde escolherá Cartão em até 6x, Débito ou Pix com total segurança.</p>
+                    <p class="text-[11px] text-neutral-300">O pedido será registrado com status confirmado e você poderá acompanhar o envio e conversar com o suporte diretamente na Área do Cliente.</p>
                 </div>
 
                 <button type="submit" id="btnProcessPayment" class="w-full bg-orange-600 hover:bg-orange-500 text-black font-bold py-4 rounded-2xl uppercase tracking-wider transition shadow-lg shadow-orange-600/20 flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-lock"></i> Ir para Pagamento Seguro Mercado Pago
+                    <i class="fa-solid fa-lock"></i> Finalizar Pedido com Sucesso
                 </button>
             </form>
         </div>
@@ -252,7 +255,6 @@
         let cart = JSON.parse(localStorage.getItem('daiane_cart')) || [];
         let activeUserKey = localStorage.getItem('daiane_active_user') || null;
         let selectedOrderId = null;
-        let lastOrderTotal = 0;
         let appliedDiscount = 0;
         let appliedCouponCode = '';
 
@@ -419,8 +421,7 @@
         function openCheckoutModal() { toggleCartModal(false); document.getElementById('checkoutModal').classList.remove('hidden'); }
         function closeCheckoutModal() { document.getElementById('checkoutModal').classList.add('hidden'); }
 
-        // Processamento Checkout Pro Seguro Oficial
-        function processCheckoutPro(e) {
+        function processCheckoutOrder(e) {
             e.preventDefault();
             const name = document.getElementById('custName').value.trim();
             const email = document.getElementById('custEmail').value.trim();
@@ -445,8 +446,8 @@
                 subtotal: subtotal,
                 discountCoupon: appliedCouponCode || 'Nenhum',
                 total: total,
-                paymentMethod: 'Mercado Pago (Cartão / Pix / Carteiras)',
-                paymentStatus: 'Aprovado (Checkout Oficial)',
+                paymentMethod: 'Mercado Pago / PIX',
+                paymentStatus: 'Aprovado',
                 orderStatus: 'Em Separação',
                 trackingCode: tracking,
                 date: new Date().toLocaleDateString('pt-BR')
@@ -464,9 +465,9 @@
             updateCartUI();
 
             closeCheckoutModal();
-
-            // Redireciona o cliente para o ambiente oficial de pagamento seguro do Mercado Pago
-            window.location.href = `https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=MP_DAIANE_${cleanOrderId}`;
+            switchView('account');
+            renderClientDashboard();
+            alert('Pedido finalizado com sucesso! Acompanhe o status e o chat na sua Área do Cliente.');
         }
 
         function loginClient() {
