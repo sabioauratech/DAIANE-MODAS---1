@@ -23,11 +23,6 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Inicializa o SDK do Mercado Pago com a sua Public Key (substitua pela sua chave pública real se necessário)
-        const mp = new MercadoPago('APP_USR-YOUR-PUBLIC-KEY-HERE', {
-            locale: 'pt-BR'
-        });
-
         tailwind.config = {
             theme: {
                 extend: {
@@ -216,7 +211,7 @@
         <div class="glass-panel border border-neutral-800 rounded-3xl max-w-lg w-full p-8 max-h-[90vh] overflow-y-auto relative shadow-2xl">
             <button onclick="closeCheckoutModal()" class="absolute top-4 right-4 text-neutral-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
             <h2 class="text-xl font-bold font-luxury text-white mb-2">Finalizar Pedido com Mercado Pago</h2>
-            <p class="text-xs text-neutral-400 mb-6">Insira seus dados para registrar o pedido com segurança.</p>
+            <p class="text-xs text-neutral-400 mb-6">Insira seus dados para prosseguir para o pagamento seguro.</p>
             
             <form onsubmit="processCheckoutOrder(event)" class="space-y-4 text-xs">
                 <div>
@@ -231,12 +226,12 @@
                 </div>
 
                 <div class="bg-neutral-950 p-4 rounded-2xl border border-neutral-800 space-y-2 text-center">
-                    <i class="fa-solid fa-shield-halved text-orange-500 text-xl"></i>
-                    <p class="text-[11px] text-neutral-300">O pedido será registrado com status confirmado e você poderá acompanhar o envio e conversar com o suporte diretamente na Área do Cliente.</p>
+                    <i class="fa-solid fa-lock text-orange-500 text-xl"></i>
+                    <p class="text-[11px] text-neutral-300">Você será redirecionado para o ambiente seguro e oficial do Mercado Pago para concluir o pagamento via Pix ou Cartão.</p>
                 </div>
 
                 <button type="submit" id="btnProcessPayment" class="w-full bg-orange-600 hover:bg-orange-500 text-black font-bold py-4 rounded-2xl uppercase tracking-wider transition shadow-lg shadow-orange-600/20 flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-lock"></i> Finalizar Pedido com Sucesso
+                    <i class="fa-solid fa-arrow-right"></i> Ir para o Pagamento
                 </button>
             </form>
         </div>
@@ -259,6 +254,45 @@
         let appliedCouponCode = '';
 
         window.onload = function() { 
+            // Verificar se regressou do pagamento do Mercado Pago
+            const urlParams = new URLSearchParams(window.location.search);
+            const status = urlParams.get('status');
+            if (status) {
+                const pendingData = localStorage.getItem('pending_order');
+                if (pendingData && status === 'sucesso') {
+                    const orderInfo = JSON.parse(pendingData);
+                    const cleanOrderId = 'ord_' + Math.floor(10000 + Math.random() * 90000);
+                    const tracking = 'DAI-' + Math.floor(100000 + Math.random() * 900000);
+
+                    const finalOrder = {
+                        id: '#' + cleanOrderId.replace('ord_', ''),
+                        firebaseKey: cleanOrderId,
+                        customerName: orderInfo.customerName,
+                        customerEmail: orderInfo.customerEmail,
+                        customerPhone: orderInfo.customerPhone,
+                        customerAddress: orderInfo.customerAddress,
+                        items: orderInfo.items,
+                        subtotal: orderInfo.items.reduce((s, i) => s + (i.price * i.quantity), 0),
+                        discountCoupon: appliedCouponCode || 'Nenhum',
+                        total: orderInfo.items.reduce((s, i) => s + (i.price * i.quantity), 0),
+                        paymentMethod: 'Mercado Pago (Checkout Pro)',
+                        paymentStatus: 'Aprovado',
+                        orderStatus: 'Em Separação',
+                        trackingCode: tracking,
+                        date: new Date().toLocaleDateString('pt-BR')
+                    };
+
+                    db.ref('pedidos/' + cleanOrderId).set(finalOrder);
+                    localStorage.removeItem('pending_order');
+                    localStorage.removeItem('daiane_cart');
+                    cart = [];
+                    
+                    activeUserKey = orderInfo.customerEmail;
+                    localStorage.setItem('daiane_active_user', activeUserKey);
+                    switchView('account');
+                }
+            }
+
             db.ref('produtos').on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (!data) {
@@ -421,53 +455,54 @@
         function openCheckoutModal() { toggleCartModal(false); document.getElementById('checkoutModal').classList.remove('hidden'); }
         function closeCheckoutModal() { document.getElementById('checkoutModal').classList.add('hidden'); }
 
-        function processCheckoutOrder(e) {
+        // NOVA FUNÇÃO: Integração real com o Backend do Railway (Mercado Pago)
+        async function processCheckoutOrder(e) {
             e.preventDefault();
             const name = document.getElementById('custName').value.trim();
             const email = document.getElementById('custEmail').value.trim();
             const phone = document.getElementById('custPhone').value.trim();
             const address = document.getElementById('custAddress').value.trim();
 
-            let subtotal = cart.reduce((s, i) => s + ((parseFloat(i.price) || 0) * i.quantity), 0);
-            let total = subtotal;
-            if(appliedDiscount > 0) total = subtotal - (subtotal * (appliedDiscount / 100));
-
-            const tracking = 'DAI-' + Math.floor(100000 + Math.random() * 900000);
-            const cleanOrderId = 'ord_' + Math.floor(10000 + Math.random() * 90000);
-
-            const newOrder = {
-                id: '#' + cleanOrderId.replace('ord_', ''),
-                firebaseKey: cleanOrderId,
-                customerName: name,
-                customerEmail: email,
-                customerPhone: phone,
-                customerAddress: address,
-                items: [...cart],
-                subtotal: subtotal,
-                discountCoupon: appliedCouponCode || 'Nenhum',
-                total: total,
-                paymentMethod: 'Mercado Pago / PIX',
-                paymentStatus: 'Aprovado',
-                orderStatus: 'Em Separação',
-                trackingCode: tracking,
-                date: new Date().toLocaleDateString('pt-BR')
+            const orderData = {
+                items: cart.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })),
+                payer: { name: name, email: email }
             };
 
-            db.ref('pedidos/' + cleanOrderId).set(newOrder);
+            const btn = document.getElementById('btnProcessPayment');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> A criar pagamento...`;
 
-            activeUserKey = email;
-            localStorage.setItem('daiane_active_user', activeUserKey);
+            try {
+                const response = await fetch('/api/criar-pagamento', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderData)
+                });
 
-            cart = [];
-            appliedDiscount = 0;
-            appliedCouponCode = '';
-            localStorage.setItem('daiane_cart', JSON.stringify(cart));
-            updateCartUI();
+                const data = await response.json();
+                if (data.init_point) {
+                    // Guarda os dados pendentes para finalizar no Firebase quando regressar com sucesso
+                    localStorage.setItem('pending_order', JSON.stringify({
+                        customerName: name,
+                        customerEmail: email,
+                        customerPhone: phone,
+                        customerAddress: address,
+                        items: [...cart]
+                    }));
 
-            closeCheckoutModal();
-            switchView('account');
-            renderClientDashboard();
-            alert('Pedido finalizado com sucesso! Acompanhe o status e o chat na sua Área do Cliente.');
+                    // Redireciona para o Checkout Pro oficial do Mercado Pago
+                    window.location.href = data.init_point;
+                } else {
+                    alert('Erro ao iniciar o pagamento com o Mercado Pago.');
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-arrow-right"></i> Ir para o Pagamento`;
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erro de conexão com o servidor de pagamento.');
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-arrow-right"></i> Ir para o Pagamento`;
+            }
         }
 
         function loginClient() {
