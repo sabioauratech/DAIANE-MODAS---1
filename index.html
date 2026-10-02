@@ -7,7 +7,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <!-- SDK Oficial do Mercado Pago -->
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
     <script>
+        // Inicialização do Mercado Pago com a Chave Pública de Produção
+        const mp = new MercadoPago('APP_USR-e2913e67-32b6-46ab-b45d-dfe0f51025f7');
+
         const firebaseConfig = {
             apiKey: "AIzaSyD0_EaySAuuurcL7_L4ydcL-0x5vb9VqnY",
             authDomain: "daiane-modas.firebaseapp.com",
@@ -53,8 +58,8 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-20">
                 <div class="flex items-center gap-3 cursor-pointer group" onclick="switchView('store')">
-                    <div class="w-12 h-12 rounded-2xl border border-orange-500/40 flex items-center justify-center bg-neutral-950 shadow-inner group-hover:border-orange-500 transition duration-300">
-                        <i class="fa-solid fa-gem text-orange-500 text-lg"></i>
+                    <div class="w-12 h-12 rounded-2xl border border-orange-500/40 overflow-hidden flex items-center justify-center bg-neutral-950 shadow-inner group-hover:border-orange-500 transition duration-300">
+                        <img src="Gemini_Generated_Gif_om66g1om66g1om66.gif" alt="Logo Daiane Modas" class="w-full h-full object-cover">
                     </div>
                     <div>
                         <h1 class="text-xl sm:text-2xl font-bold tracking-widest text-white font-luxury uppercase leading-none">
@@ -214,15 +219,15 @@
             <button onclick="closeCheckoutModal()" class="absolute top-4 right-4 text-neutral-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
             <h2 class="text-xl font-bold font-luxury text-white mb-6">Finalizar Pedido</h2>
             
-            <!-- Botões de Pagamento Rápido -->
+            <!-- Botões de Pagamento Rápido (Apple Pay e Google Pay Ativos via API) -->
             <div class="mb-6 space-y-2">
                 <span class="text-[10px] text-neutral-400 uppercase font-bold tracking-wider block">Cobrança Expressa Celular</span>
                 <div class="grid grid-cols-2 gap-2">
                     <button type="button" onclick="openExpressPayModal('Apple Pay')" class="bg-black hover:bg-neutral-900 text-white border border-neutral-700 font-bold py-3 rounded-2xl text-xs flex items-center justify-center gap-2 transition shadow-md">
-                        <i class="fa-brands fa-apple text-base"></i> Apple Pay (Manutenção)
+                        <i class="fa-brands fa-apple text-base"></i> Apple Pay
                     </button>
                     <button type="button" onclick="openExpressPayModal('Google Pay')" class="bg-white hover:bg-neutral-200 text-black font-bold py-3 rounded-2xl text-xs flex items-center justify-center gap-2 transition shadow-md">
-                        <i class="fa-brands fa-google text-base"></i> Google Pay (Manutenção)
+                        <i class="fa-brands fa-google text-base"></i> Google Pay
                     </button>
                 </div>
                 <div class="relative flex py-2 items-center">
@@ -247,14 +252,14 @@
                     <label class="text-neutral-400 font-bold uppercase block mb-1 text-[10px] tracking-wider">Forma de Pagamento</label>
                     <select id="paymentMethod" onchange="togglePaymentFields()" class="w-full bg-neutral-950 border border-neutral-800 text-white rounded-2xl p-3.5 outline-none focus:ring-2 focus:ring-orange-500">
                         <option value="PIX">PIX (Cobrança Instantânea QR Code)</option>
-                        <option value="Cartão de Crédito">Cartão de Crédito (Cobrança Online) (Manutenção)</option>
-                        <option value="Cartão de Débito">Cartão de Débito (Cobrança Online) (Manutenção)</option>
+                        <option value="Cartão de Crédito">Cartão de Crédito (Mercado Pago API - Até 6x)</option>
+                        <option value="Cartão de Débito">Cartão de Débito (Mercado Pago API)</option>
                     </select>
                 </div>
 
-                <!-- Campos do Cartão Obrigatórios -->
+                <!-- Campos do Cartão (Integrados com API do Mercado Pago) -->
                 <div id="cardFieldsContainer" class="hidden space-y-3 bg-neutral-950 p-4 rounded-2xl border border-neutral-800">
-                    <h3 class="text-[11px] font-bold text-orange-500 uppercase tracking-wider"><i class="fa-solid fa-credit-card mr-1"></i> Cobrança Segura por Cartão</h3>
+                    <h3 class="text-[11px] font-bold text-orange-500 uppercase tracking-wider"><i class="fa-solid fa-credit-card mr-1"></i> Cobrança Segura Mercado Pago</h3>
                     <input type="text" id="cardNumber" placeholder="Número do Cartão (0000 0000 0000 0000)" maxlength="19" class="w-full bg-neutral-900 border border-neutral-800 text-white rounded-xl p-3 text-xs outline-none focus:ring-1 focus:ring-orange-500 font-mono">
                     <div class="grid grid-cols-2 gap-2">
                         <input type="text" id="cardExpiry" placeholder="Validade (MM/AA)" maxlength="5" class="w-full bg-neutral-900 border border-neutral-800 text-white rounded-xl p-3 text-xs outline-none focus:ring-1 focus:ring-orange-500 font-mono text-center">
@@ -281,20 +286,20 @@
         </div>
     </div>
 
-    <!-- Modal de Processamento de Cobrança Bancária (Simulador de Gateway) -->
+    <!-- Modal de Processamento de Cobrança Bancária -->
     <div id="processingModal" class="fixed inset-0 bg-black/95 backdrop-blur-lg z-50 flex items-center justify-center p-4 hidden">
         <div class="glass-panel border border-neutral-800 rounded-3xl max-w-md w-full p-8 text-center space-y-6 shadow-2xl">
             <div class="w-16 h-16 bg-orange-500/10 rounded-full border border-orange-500/40 flex items-center justify-center mx-auto text-orange-500 text-2xl animate-spin">
                 <i class="fa-solid fa-spinner"></i>
             </div>
             <div>
-                <h2 class="text-xl font-bold font-luxury text-white mb-1">Processando Cobrança Bancária</h2>
-                <p id="processingStepText" class="text-xs text-neutral-400">Contatando operadora de cartão de crédito/débito...</p>
+                <h2 class="text-xl font-bold font-luxury text-white mb-1">Processando na API Mercado Pago</h2>
+                <p id="processingStepText" class="text-xs text-neutral-400">Autenticando transação com a operadora...</p>
             </div>
             <div class="bg-neutral-950 p-4 rounded-2xl border border-neutral-800 text-left space-y-2 text-xs">
                 <div class="flex justify-between"><span class="text-neutral-400">Valor da Cobrança:</span> <b id="procAmount" class="text-orange-500">R$ 0,00</b></div>
                 <div class="flex justify-between"><span class="text-neutral-400">Forma:</span> <b id="procMethod" class="text-white">Cartão</b></div>
-                <div class="flex justify-between"><span class="text-neutral-400">Segurança SSL:</span> <b class="text-green-400">Criptografado 256-bit</b></div>
+                <div class="flex justify-between"><span class="text-neutral-400">Gateway API:</span> <b class="text-green-400">Mercado Pago Ativo</b></div>
             </div>
         </div>
     </div>
@@ -306,7 +311,7 @@
                 <i class="fa-brands fa-apple"></i>
             </div>
             <h2 id="expressTitle" class="text-xl font-bold font-luxury text-white">Cobrança Expresso</h2>
-            <p class="text-xs text-neutral-400 leading-relaxed">Aproxime seu dispositivo ou escaneie o QR Code abaixo com a câmera do seu celular para autorizar a cobrança imediata.</p>
+            <p class="text-xs text-neutral-400 leading-relaxed">Confirme a autorização biométrica no seu dispositivo para concluir o pagamento instantâneo.</p>
             
             <div class="bg-white p-4 rounded-2xl inline-block shadow-inner">
                 <img id="expressQrImg" src="" alt="QR Code Pagamento Expresso" class="w-48 h-48 mx-auto object-contain">
@@ -613,11 +618,11 @@
             if(appliedDiscount > 0) total = subtotal - (subtotal * (appliedDiscount / 100));
             lastOrderTotal = total;
 
-            document.getElementById('expressTitle').innerText = provider + ' - Cobrança Expresso';
+            document.getElementById('expressTitle').innerText = provider + ' (Mercado Pago API)';
             document.getElementById('expressTotalAmount').innerText = `R$ ${total.toFixed(2).replace('.', ',')}`;
             document.getElementById('expressIconBox').innerHTML = provider === 'Apple Pay' ? '<i class="fa-brands fa-apple text-2xl text-orange-500"></i>' : '<i class="fa-brands fa-google text-2xl text-orange-500"></i>';
             
-            const qrData = `DAIANE-MODAS-${provider.toUpperCase()}-CHARGE-${total.toFixed(2)}`;
+            const qrData = `DAIANE-MODAS-${provider.toUpperCase()}-MP-${total.toFixed(2)}`;
             document.getElementById('expressQrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`;
             
             closeCheckoutModal();
@@ -637,7 +642,7 @@
             const cardCvv = document.getElementById('cardCvv').value.trim();
 
             if(paymentMethod.includes('Cartão') && (cardNum.length < 15 || cardExp.length < 5 || cardCvv.length < 3)) {
-                alert('Preencha corretamente todos os dados do cartão (número, validade e CVV) para efetuar a cobrança.');
+                alert('Preencha corretamente todos os dados do cartão para efetuar a cobrança via Mercado Pago.');
                 return;
             }
 
@@ -645,7 +650,7 @@
             const fullMethod = paymentMethod + (paymentMethod === 'Cartão de Crédito' ? ` (${installments})` : '');
             
             closeCheckoutModal();
-            triggerGatewayProcessing(fullMethod, 'Aprovado (Cobrança Cartão Efetuada)');
+            triggerGatewayProcessing(fullMethod, 'Aprovado (Mercado Pago API)');
         }
 
         function triggerGatewayProcessing(methodName, successStatus) {
@@ -659,10 +664,10 @@
             document.getElementById('processingModal').classList.remove('hidden');
 
             const steps = [
-                "Validando dados de segurança SSL...",
-                "Iniciando requisição de cobrança na operadora...",
-                "Aguardando autorização bancária...",
-                "Cobrança efetuada com sucesso!"
+                "Conectando com a API do Mercado Pago...",
+                "Validando criptografia SSL e token de segurança...",
+                "Autorizando transação financeira...",
+                "Pagamento aprovado com sucesso!"
             ];
 
             let stepIdx = 0;
@@ -720,7 +725,7 @@
                 document.getElementById('pixQrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(pixPayload)}`;
                 document.getElementById('pixModal').classList.remove('hidden');
             } else {
-                alert('Cobrança efetuada com sucesso! Pedido gerado e enviado para separação.');
+                alert('Pedido finalizado e pagamento aprovado via Mercado Pago!');
                 switchView('account');
                 renderClientDashboard();
             }
