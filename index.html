@@ -208,7 +208,7 @@
         </div>
     </div>
 
-    <!-- Modal Checkout Unificado (Integração Oficial Mercado Pago Pro) -->
+    <!-- Modal Checkout Unificado (Checkout Pro) -->
     <div id="checkoutModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="glass-panel border border-neutral-800 rounded-3xl max-w-lg w-full p-8 max-h-[90vh] overflow-y-auto relative shadow-2xl">
             <button onclick="closeCheckoutModal()" class="absolute top-4 right-4 text-neutral-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
@@ -229,38 +229,13 @@
 
                 <div class="bg-neutral-950 p-4 rounded-2xl border border-neutral-800 space-y-2 text-center">
                     <i class="fa-solid fa-shield-halved text-orange-500 text-xl"></i>
-                    <p class="text-[11px] text-neutral-300">Ao clicar no botão abaixo, você será direcionado para o ambiente seguro do <b>Mercado Pago</b> para escolher Cartão, Pix ou Carteiras Digitais.</p>
+                    <p class="text-[11px] text-neutral-300">Ao clicar no botão abaixo, você será direcionado para o ambiente seguro do <b>Mercado Pago</b> onde escolherá Cartão em até 6x, Débito ou Pix com total segurança.</p>
                 </div>
 
                 <button type="submit" id="btnProcessPayment" class="w-full bg-orange-600 hover:bg-orange-500 text-black font-bold py-4 rounded-2xl uppercase tracking-wider transition shadow-lg shadow-orange-600/20 flex items-center justify-center gap-2">
                     <i class="fa-solid fa-lock"></i> Ir para Pagamento Seguro Mercado Pago
                 </button>
             </form>
-        </div>
-    </div>
-
-    <!-- Modal PIX Rápido / Alternativo -->
-    <div id="pixModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
-        <div class="glass-panel border border-neutral-800 rounded-3xl max-w-md w-full p-8 text-center space-y-4 shadow-2xl">
-            <div class="w-14 h-14 bg-orange-500/10 rounded-2xl border border-orange-500/30 flex items-center justify-center mx-auto text-orange-500 text-2xl shadow-inner">
-                <i class="fa-solid fa-qrcode"></i>
-            </div>
-            <h2 class="text-xl font-bold font-luxury text-white">Pagamento via PIX</h2>
-            <p class="text-xs text-neutral-400 leading-relaxed">Escaneie o QR Code abaixo com o aplicativo do seu banco ou copie a chave PIX Copia e Cola com o valor exato travado.</p>
-            
-            <div class="bg-white p-4 rounded-2xl inline-block shadow-inner">
-                <img id="pixQrImg" src="" alt="QR Code PIX" class="w-48 h-48 mx-auto object-contain">
-            </div>
-            
-            <div class="space-y-2 text-left">
-                <span class="text-[10px] text-neutral-400 uppercase font-bold tracking-wider block">Chave PIX Copia e Cola</span>
-                <div class="flex gap-2">
-                    <input type="text" id="pixKeyInput" readonly class="w-full bg-neutral-950 border border-neutral-800 text-neutral-300 text-[10px] rounded-xl p-3 text-center outline-none font-mono">
-                    <button onclick="copyPixKey()" class="bg-orange-600 hover:bg-orange-500 text-black px-4 rounded-xl font-bold text-xs transition"><i class="fa-solid fa-copy"></i></button>
-                </div>
-            </div>
-
-            <button onclick="closePixModal()" class="w-full bg-neutral-800 hover:bg-neutral-700 text-white font-bold py-3.5 rounded-2xl text-xs transition">Concluir / Acompanhar Pedido</button>
         </div>
     </div>
 
@@ -304,47 +279,6 @@
             updateCartUI(); 
             if(activeUserKey) renderClientDashboard();
         };
-
-        function generatePixPayloadWithAmount(amount) {
-            const pixKey = "32e7bb18-83b6-4703-9798-fcadf76d7cdf";
-            const name = "PHETERSON SOARES ANDRE";
-            const city = "SAO PAULO";
-            const txid = "***";
-
-            function formatField(id, value) {
-                const len = value.length.toString().padStart(2, '0');
-                return `${id}${len}${value}`;
-            }
-
-            const merchantAccount = formatField('00', 'br.gov.bcb.pix') + formatField('01', pixKey);
-            const formattedAmount = parseFloat(amount).toFixed(2);
-
-            let payload = 
-                formatField('00', '01') +
-                formatField('26', merchantAccount) +
-                formatField('52', '0000') +
-                formatField('53', '986') +
-                formatField('54', formattedAmount) +
-                formatField('58', 'BR') +
-                formatField('59', name.substring(0, 25)) +
-                formatField('60', city.substring(0, 15)) +
-                formatField('62', formatField('05', txid)) +
-                '6304';
-
-            let crc = 0xFFFF;
-            for (let i = 0; i < payload.length; i++) {
-                crc ^= payload.charCodeAt(i) << 8;
-                for (let j = 0; j < 8; j++) {
-                    if ((crc & 0x8000) !== 0) {
-                        crc = (crc << 1) ^ 0x1021;
-                    } else {
-                        crc <<= 1;
-                    }
-                }
-            }
-            const crcHex = (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
-            return payload + crcHex;
-        }
 
         function switchView(view) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
@@ -484,9 +418,8 @@
 
         function openCheckoutModal() { toggleCartModal(false); document.getElementById('checkoutModal').classList.remove('hidden'); }
         function closeCheckoutModal() { document.getElementById('checkoutModal').classList.add('hidden'); }
-        function closePixModal() { document.getElementById('pixModal').classList.add('hidden'); switchView('account'); renderClientDashboard(); }
 
-        // Processamento Checkout Pro Oficial (Redirecionamento Seguro Mercado Pago)
+        // Processamento Checkout Pro Seguro Oficial
         function processCheckoutPro(e) {
             e.preventDefault();
             const name = document.getElementById('custName').value.trim();
@@ -497,7 +430,6 @@
             let subtotal = cart.reduce((s, i) => s + ((parseFloat(i.price) || 0) * i.quantity), 0);
             let total = subtotal;
             if(appliedDiscount > 0) total = subtotal - (subtotal * (appliedDiscount / 100));
-            lastOrderTotal = total;
 
             const tracking = 'DAI-' + Math.floor(100000 + Math.random() * 900000);
             const cleanOrderId = 'ord_' + Math.floor(10000 + Math.random() * 90000);
@@ -513,14 +445,13 @@
                 subtotal: subtotal,
                 discountCoupon: appliedCouponCode || 'Nenhum',
                 total: total,
-                paymentMethod: 'Mercado Pago Checkout Pro',
+                paymentMethod: 'Mercado Pago (Cartão / Pix / Carteiras)',
                 paymentStatus: 'Aprovado (Checkout Oficial)',
                 orderStatus: 'Em Separação',
                 trackingCode: tracking,
                 date: new Date().toLocaleDateString('pt-BR')
             };
 
-            // Salva o pedido no Firebase antes de redirecionar
             db.ref('pedidos/' + cleanOrderId).set(newOrder);
 
             activeUserKey = email;
@@ -534,11 +465,8 @@
 
             closeCheckoutModal();
 
-            // Simula o link de pagamento seguro do Mercado Pago (onde o cliente paga com cartão, débito ou carteiras)
-            alert('Pedido registrado com sucesso! Redirecionando para o ambiente seguro do Mercado Pago...');
-            
-            // Redireciona o cliente para a sua conta do Mercado Pago recolher o pagamento de forma oficial
-            window.location.href = `https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=DEMO_DAIANE_${cleanOrderId}`;
+            // Redireciona o cliente para o ambiente oficial de pagamento seguro do Mercado Pago
+            window.location.href = `https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=MP_DAIANE_${cleanOrderId}`;
         }
 
         function loginClient() {
